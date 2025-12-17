@@ -698,15 +698,16 @@ write
 # bouns for now : 
 Port Security (Layer 2 Protection)
 
-    Description: Implemented strict security policies at the access layer to prevent unauthorized devices (Rogue Laptops/Hubs) from connecting to the network.
+Description: Implemented strict security policies at the access layer to prevent unauthorized devices (Rogue Laptops/Hubs) from connecting to the network.
 
-    Configuration:
+  Configuration:
+  Sticky MAC: Automatically learns connected device addresses.
+  Violation Modes: Configured shutdown for Faculty (Zero Tolerance) and restrict for Students (Log & Drop).
 
-        Sticky MAC: Automatically learns connected device addresses.
+  Impact: Prevents "Man-in-the-Middle" attacks and unauthorized network access.
 
-        Violation Modes: Configured shutdown for Faculty (Zero Tolerance) and restrict for Students (Log & Drop).
 
-    Impact: Prevents "Man-in-the-Middle" attacks and unauthorized network access.
+<img width="705" height="211" alt="image" src="https://github.com/user-attachments/assets/a14ef108-c621-4bd1-b28d-6866ae743404" />
 
 2. Management VLAN Isolation (VLAN 99)
 
@@ -714,8 +715,11 @@ Port Security (Layer 2 Protection)
 
     Impact: Follows industry best practices for "Out-of-Band Management." It ensures that network administrators can still access and manage switches remotely via SSH even if the student network is congested or under attack.
 
+<img width="735" height="129" alt="image" src="https://github.com/user-attachments/assets/a02009d4-8d0b-45ca-9e68-163614f9a58b" />
+
 3. Spanning-Tree PortFast (Performance Optimization)
 
     Description: Enabled spanning-tree portfast on all end-user ports.
 
     Impact: Reduces the time for a port to become active from 30 seconds to sub-seconds. This eliminates DHCP timeouts when PCs are turned on, ensuring immediate connectivity
+<img width="709" height="83" alt="image" src="https://github.com/user-attachments/assets/2b2baca9-d79c-43a9-b14c-b98feb690240" />
