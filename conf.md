@@ -1112,4 +1112,266 @@ Expected: Shows 5 connected networks (4 VLANs + MGMT)
 ## DHCP : 
 <img width="791" height="405" alt="image" src="https://github.com/user-attachments/assets/d71fad42-6f8e-44c0-826b-d0e5d176d97a" />
 
+# LIBRARY : 
+### LIB Distribution Switch :
+```
+enable
+configure terminal
+hostname LIB-Distribution-Switch
+
+vlan 40
+ name LIB-STUDENTS
+vlan 41
+ name LIB-STAFF
+vlan 42
+ name LIB-SERVERS
+vlan 43
+ name LIB-PRINTERS
+vlan 99
+ name MGMT-LIB
+exit
+
+interface vlan 99
+ ip address 10.0.254.194 255.255.255.192
+ no shutdown
+ exit
+ip default-gateway 10.0.254.193
+
+interface GigabitEthernet1/0/1
+ description Trunk-to-LIB-Router
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 40-43,99
+ no shutdown
+ exit
+
+interface range GigabitEthernet1/0/2-3
+ description Trunk-to-Access-Switches
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 40-43,99
+ no shutdown
+ exit
+
+end
+write memory
+```
+
+### LIB Access Switch 1 (STUDENTS - VLAN 40) : 
+```
+enable
+configure terminal
+hostname LIB-Access-Switch-1
+
+vlan 40
+ name LIB-STUDENTS
+vlan 99
+ name MGMT-LIB
+exit
+
+interface GigabitEthernet0/1
+ switchport mode trunk
+ switchport trunk allowed vlan 40,99
+ no shutdown
+ exit
+
+interface range FastEthernet0/1-24
+ switchport mode access
+ switchport access vlan 40
+ switchport port-security
+ switchport port-security maximum 2
+ switchport port-security violation restrict
+ switchport port-security mac-address sticky
+ spanning-tree portfast
+ no shutdown
+ exit
+
+interface vlan 99
+ ip address 10.0.254.200 255.255.255.192
+ no shutdown
+ exit
+ip default-gateway 10.0.254.193
+
+ip domain-name lib.college.local
+crypto key generate rsa
+username admin privilege 15 secret Admin@123
+line vty 0 4
+ transport input ssh
+ login local
+ exit
+
+end
+write memory
+```
+
+### LIB Access Switch 2 (STAFF + SERVERS + PRINTERS) : 
+
+```
+enable
+configure terminal
+hostname LIB-Access-Switch-2
+
+vlan 41
+ name LIB-STAFF
+vlan 42
+ name LIB-SERVERS
+vlan 43
+ name LIB-PRINTERS
+vlan 99
+ name MGMT-LIB
+exit
+
+interface GigabitEthernet0/1
+ switchport mode trunk
+ switchport trunk allowed vlan 41,42,43,99
+ no shutdown
+ exit
+
+! Staff Ports (10 ports)
+interface range FastEthernet0/1-10
+ switchport mode access
+ switchport access vlan 41
+ switchport port-security
+ switchport port-security maximum 1
+ switchport port-security violation restrict
+ switchport port-security mac-address sticky
+ spanning-tree portfast
+ no shutdown
+ exit
+
+! Server Ports (5 ports)
+interface range FastEthernet0/11-15
+ switchport mode access
+ switchport access vlan 42
+ switchport port-security
+ switchport port-security maximum 1
+ switchport port-security violation shutdown
+ switchport port-security mac-address sticky
+ spanning-tree portfast
+ no shutdown
+ exit
+
+! Printer Ports (5 ports)
+interface range FastEthernet0/16-20
+ switchport mode access
+ switchport access vlan 43
+ switchport port-security
+ switchport port-security maximum 1
+ switchport port-security violation restrict
+ switchport port-security mac-address sticky
+ spanning-tree portfast
+ no shutdown
+ exit
+
+interface vlan 99
+ ip address 10.0.254.201 255.255.255.192
+ no shutdown
+ exit
+ip default-gateway 10.0.254.193
+
+ip domain-name lib.college.local
+crypto key generate rsa
+username admin privilege 15 secret Admin@123
+line vty 0 4
+ transport input ssh
+ login local
+ exit
+
+end
+write memory
+```
+###  LIB Router : 
+```
+enable
+configure terminal
+hostname Library-Router
+
+ip dhcp excluded-address 10.0.2.1 10.0.2.10
+ip dhcp excluded-address 10.0.2.65 10.0.2.72
+ip dhcp excluded-address 10.0.2.81 10.0.2.88
+ip dhcp excluded-address 10.0.2.97 10.0.2.104
+ip dhcp excluded-address 10.0.254.193 10.0.254.205
+
+default interface GigabitEthernet0/0
+interface GigabitEthernet0/0
+ no ip address
+ no shutdown
+ exit
+
+interface GigabitEthernet0/0.40
+ encapsulation dot1Q 40
+ ip address 10.0.2.1 255.255.255.192
+ exit
+
+interface GigabitEthernet0/0.41
+ encapsulation dot1Q 41
+ ip address 10.0.2.65 255.255.255.240
+ exit
+
+interface GigabitEthernet0/0.42
+ encapsulation dot1Q 42
+ ip address 10.0.2.81 255.255.255.240
+ exit
+
+interface GigabitEthernet0/0.43
+ encapsulation dot1Q 43
+ ip address 10.0.2.97 255.255.255.240
+ exit
+
+interface GigabitEthernet0/0.99
+ encapsulation dot1Q 99
+ ip address 10.0.254.193 255.255.255.192
+ exit
+
+interface Serial0/1/0
+ ip address 10.0.10.14 255.255.255.252
+ no shutdown
+ exit
+
+ip dhcp pool LIB-STUDENTS
+ network 10.0.2.0 255.255.255.192
+ default-router 10.0.2.1
+ dns-server 8.8.8.8
+ exit
+
+ip dhcp pool LIB-STAFF
+ network 10.0.2.64 255.255.255.240
+ default-router 10.0.2.65
+ dns-server 8.8.8.8
+ exit
+
+ip dhcp pool LIB-SERVERS
+ network 10.0.2.80 255.255.255.240
+ default-router 10.0.2.81
+ dns-server 8.8.8.8
+ exit
+
+ip dhcp pool LIB-PRINTERS
+ network 10.0.2.96 255.255.255.240
+ default-router 10.0.2.97
+ dns-server 8.8.8.8
+ exit
+
+router ospf 1
+ router-id 5.5.5.5
+ network 10.0.10.12 0.0.0.3 area 0
+ network 10.0.2.0 0.0.0.63 area 0
+ network 10.0.2.64 0.0.0.15 area 0
+ network 10.0.2.80 0.0.0.15 area 0
+ network 10.0.2.96 0.0.0.15 area 0
+ network 10.0.254.192 0.0.0.63 area 0
+ exit
+
+ip domain-name lib.college.local
+crypto key generate rsa
+username admin privilege 15 secret Admin@123
+line vty 0 4
+ transport input ssh
+ login local
+ exit
+
+end
+write memory
+```
+
 
