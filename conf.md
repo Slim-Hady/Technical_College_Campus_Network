@@ -1,280 +1,368 @@
-# Topology : 
-<img width="2538" height="1030" alt="image" src="https://github.com/user-attachments/assets/92034c39-cfc2-485f-a578-b160597da5d4" />
-
-
-# conf : 
-
-# ISB : 
-<img width="805" height="896" alt="image" src="https://github.com/user-attachments/assets/6c555fda-fc76-4d21-b701-21fcb2978408" />
-
-## Loopback : 
-<img width="805" height="896" alt="image" src="https://github.com/user-attachments/assets/7eea9f4e-2b4e-4ea3-bca5-15203cafbf48" />
-
-
-## bgp : 
-<img width="805" height="896" alt="image" src="https://github.com/user-attachments/assets/445a70f9-bed0-4fd5-ab6c-7fbe8cf1cdcf" />
-
-
-# Main Router : 
-
-## Connect with Internet ( ISP ) : 
-<img width="805" height="896" alt="image" src="https://github.com/user-attachments/assets/0b011b9c-b12d-42b1-8d60-986591703e06" />
-
-## connect with CS : 
-<img width="810" height="895" alt="image" src="https://github.com/user-attachments/assets/29f4ab16-8da6-493b-8c3a-0a337295db26" />
-
-## connect with ENG : 
-<img width="810" height="895" alt="image" src="https://github.com/user-attachments/assets/1f350276-e2ad-48b8-bca5-124a2715764b" />
-
-## connect with Admin : 
-<img width="810" height="895" alt="image" src="https://github.com/user-attachments/assets/c6b5b1c1-bf05-4c90-ac25-b10bb6549cfd" />
-
-## connect with Lib : 
-<img width="810" height="895" alt="image" src="https://github.com/user-attachments/assets/96a9e6fb-2e71-4ef9-9ee7-adfd81d78896" />
-
-## OSPF : 
-<img width="810" height="895" alt="image" src="https://github.com/user-attachments/assets/50da414d-4ac6-4df8-9d82-b8dcb20a8783" />
-
-## bgp : 
-<img width="810" height="895" alt="image" src="https://github.com/user-attachments/assets/d6d443cc-4ad9-46e8-a5da-a43eb58ed4c6" />
-
-## ACL : 
-<img width="810" height="895" alt="image" src="https://github.com/user-attachments/assets/3daf237c-8216-410d-a355-c23ebadd0f09" />
-
-
-# CS Router : 
-Interfaces : 
-<img width="810" height="895" alt="image" src="https://github.com/user-attachments/assets/b7cf6533-4b32-4e8c-ae23-bfcd925abc21" />
-
-Interfaces & DHCP : 
-<img width="810" height="895" alt="image" src="https://github.com/user-attachments/assets/b9021a49-1452-48b4-8c0c-e37df3e2f187" />
-
-OSPF :
-<img width="810" height="895" alt="image" src="https://github.com/user-attachments/assets/43be9938-ecdf-4720-ba25-620dd0f71ec0" />
-
-# ENG ROuter : 
-interfaces : 
-<img width="810" height="895" alt="image" src="https://github.com/user-attachments/assets/d5f2cab3-0e7e-45d4-83dd-3f440c26b00d" />
-
-<img width="810" height="895" alt="image" src="https://github.com/user-attachments/assets/e1cd5ded-d3f1-47c5-b8b2-08ac5fbc2fbd" />
-
-# DHCP : 
-<img width="810" height="895" alt="image" src="https://github.com/user-attachments/assets/6fa89936-d7ff-4d71-b6dc-8c80a4b4db8b" />
-
-# OSPF : 
-<img width="810" height="895" alt="image" src="https://github.com/user-attachments/assets/2a25b368-6789-44f0-8f96-6c2f42e7fbcd" />
-
-
-# Admin Router :
-## interfaces & OSPF: 
-<img width="1003" height="890" alt="image" src="https://github.com/user-attachments/assets/24748828-f75f-49da-ad46-de5cc6a3ac7e" />
-
-
-## DHCP :
-<img width="810" height="895" alt="image" src="https://github.com/user-attachments/assets/c1f9c39c-0bc1-40ab-bfd6-cd261f32a80d" />
-
-
-# Lib conf : 
-<img width="1003" height="890" alt="image" src="https://github.com/user-attachments/assets/03673ce7-ce2a-43ca-ac0e-d1c4b2d607f7" />
-
-
-
-# All conf : 
-### ISP-Router
-
-```bash
+# BUILDING 1: COMPUTER SCIENCE (CS)
+### STEP 1: CS Distribution Switch
+```
 enable
 configure terminal
-hostname ISP-Router
-interface Serial0/0/0
- ip address 200.1.1.2 255.255.255.252
- clock rate 2000000
+hostname CS-Distribution-Switch
+
+! Create VLANs for CS Department
+vlan 10
+ name CS-LABS
+vlan 11
+ name CS-FACULTY
+vlan 12
+ name CS-TAS
+vlan 99
+ name MGMT-CS
+exit
+
+! Management IP for remote access
+interface vlan 99
+ ip address 10.0.254.2 255.255.255.192
  no shutdown
  exit
-interface Loopback0
- ip address 8.8.8.8 255.255.255.255
+ip default-gateway 10.0.254.1
+
+! Trunk to CS Router (Carries ALL VLANs)
+interface GigabitEthernet1/0/1
+ description Trunk-to-CS-Router
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 10,11,12,99
+ no shutdown
  exit
-router bgp 65001
- neighbor 200.1.1.1 remote-as 65000
- network 8.8.8.8 mask 255.255.255.255
+
+! Trunks to Access Switches (Ports 2,3,4)
+interface range GigabitEthernet1/0/2-4
+ description Trunk-to-Access-Switches
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 10,11,12,99
+ no shutdown
  exit
+
 end
-write
-
+write memory
 ```
+### TEST: 
+```show vlan brief```
 
-### Main-Router
+✅ Expected Output:
+VLAN 10   CS-LABS         active
+VLAN 11   CS-FACULTY      active  
+VLAN 12   CS-TAS          active
+VLAN 99   MGMT-CS         active
+This shows all VLANs created successfully.
 
-```bash
+<img width="772" height="878" alt="image" src="https://github.com/user-attachments/assets/6b87566e-6516-4b01-9307-f4cb6207b2a7" />
+
+### STEP 2: CS Access Switch 1 (LABS - VLAN 10)
+```
 enable
 configure terminal
-hostname Main-Campus-Router
-default interface Serial0/1/0
-default interface Serial0/2/0
-default interface Serial0/3/0
-default interface Serial0/3/1
-interface Serial0/0/0
- ip address 200.1.1.1 255.255.255.252
- ip nat outside
+hostname CS-Access-Switch-1
+
+! Create VLANs needed for this switch
+vlan 10
+ name CS-LABS
+vlan 99
+ name MGMT-CS
+exit
+
+! Trunk to Distribution Switch
+interface GigabitEthernet0/1
+ description Uplink-to-Distribution
+ switchport mode trunk
+ switchport trunk allowed vlan 10,99
  no shutdown
  exit
-interface Serial0/3/0
- ip address 10.0.10.1 255.255.255.252
- clock rate 2000000
- ip nat inside
+
+! Student Lab Ports (24 ports = 24 student PCs)
+interface range FastEthernet0/1-24
+ switchport mode access
+ switchport access vlan 10
+ switchport port-security
+ switchport port-security maximum 2
+ switchport port-security violation restrict
+ switchport port-security mac-address sticky
+ spanning-tree portfast
  no shutdown
  exit
-interface Serial0/3/1
- ip address 10.0.10.5 255.255.255.252
- clock rate 2000000
- ip nat inside
+
+! Management IP for SSH access
+interface vlan 99
+ ip address 10.0.254.11 255.255.255.192
  no shutdown
  exit
-interface Serial0/2/0
- ip address 10.0.10.9 255.255.255.252
- clock rate 2000000
- ip nat inside
- no shutdown
+ip default-gateway 10.0.254.1
+
+! Enable SSH for secure management
+ip domain-name cs.college.local
+crypto key generate rsa
+username admin privilege 15 secret Admin@123
+line vty 0 4
+ transport input ssh
+ login local
  exit
-interface Serial0/1/0
- ip address 10.0.10.13 255.255.255.252
- clock rate 2000000
- ip nat inside
- no shutdown
- exit
-router ospf 1
- router-id 1.1.1.1
- network 10.0.10.0 0.0.0.3 area 0
- network 10.0.10.4 0.0.0.3 area 0
- network 10.0.10.8 0.0.0.3 area 0
- network 10.0.10.12 0.0.0.3 area 0
- default-information originate
- exit
-router bgp 65000
- neighbor 200.1.1.2 remote-as 65001
- network 10.0.0.0 mask 255.255.0.0
- exit
-access-list 1 permit 10.0.0.0 0.0.255.255
-ip nat inside source list 1 interface Serial0/0/0 overload
-ip route 0.0.0.0 0.0.0.0 200.1.1.2
+
 end
-write
+write memory
+```
+## TEST: 
+```show port-security```
+
+✅ Expected Output: 24 ports listed with "2" max addresses
+
+
+<img width="772" height="878" alt="image" src="https://github.com/user-attachments/assets/0671e98d-8cea-4bde-bfba-63abb692896e" />
+
+
+Verifies port security is active on all student ports.
+### STEP 3: CS Access Switch 2 (FACULTY - VLAN 11)
+```
+enable
+configure terminal
+hostname CS-Access-Switch-2
+
+vlan 11
+ name CS-FACULTY
+vlan 99
+ name MGMT-CS
+exit
+
+interface GigabitEthernet0/1
+ description Uplink-to-Distribution
+ switchport mode trunk
+ switchport trunk allowed vlan 11,99
+ no shutdown
+ exit
+
+! Faculty Office Ports (Strict security - 1 device per port)
+interface range FastEthernet0/1-24
+ switchport mode access
+ switchport access vlan 11
+ switchport port-security
+ switchport port-security maximum 1
+ switchport port-security violation shutdown
+ switchport port-security mac-address sticky
+ spanning-tree portfast
+ no shutdown
+ exit
+
+interface vlan 99
+ ip address 10.0.254.12 255.255.255.192
+ no shutdown
+ exit
+ip default-gateway 10.0.254.1
+
+ip domain-name cs.college.local
+crypto key generate rsa
+username admin privilege 15 secret Admin@123
+line vty 0 4
+ transport input ssh
+ login local
+ exit
+
+end
+write memory
+```
+### TEST: 
+```show interface trunk``
+
+
+✅ Expected Output: 
+Port        Mode         Encapsulation  Status        Native vlan
+Gi0/1       on           802.1q         trunking      1
+
+Confirms trunk is working properly.
+
+<img width="772" height="878" alt="image" src="https://github.com/user-attachments/assets/ed621c36-8842-4365-be46-567b9ae26d3d" />
+
+### STEP 4: CS Access Switch 3 (TEACHING ASSISTANTS - VLAN 12)
 
 ```
+enable
+configure terminal
+hostname CS-Access-Switch-3
 
-### CS-Router
+vlan 12
+ name CS-TAS
+vlan 99
+ name MGMT-CS
+exit
 
-```bash
+interface GigabitEthernet0/1
+ description Uplink-to-Distribution
+ switchport mode trunk
+ switchport trunk allowed vlan 12,99
+ no shutdown
+ exit
+
+! TA Office Ports
+interface range FastEthernet0/1-24
+ switchport mode access
+ switchport access vlan 12
+ switchport port-security
+ switchport port-security maximum 1
+ switchport port-security violation restrict
+ switchport port-security mac-address sticky
+ spanning-tree portfast
+ no shutdown
+ exit
+
+interface vlan 99
+ ip address 10.0.254.13 255.255.255.192
+ no shutdown
+ exit
+ip default-gateway 10.0.254.1
+
+ip domain-name cs.college.local
+crypto key generate rsa
+username admin privilege 15 secret Admin@123
+line vty 0 4
+ transport input ssh
+ login local
+ exit
+
+end
+write memory
+```
+### TEST: 
+```show ip interface brief```
+
+
+✅ Expected Output: 
+Interface    IP-Address      OK? Method Status
+Vlan99       10.0.254.13     YES manual up
+
+ Shows management interface is up with correct IP.
+
+ <img width="772" height="878" alt="image" src="https://github.com/user-attachments/assets/ab2d52fe-e2f5-4e40-96e9-5c9bfae88c9b" />
+
+# STEP 5: CS Router (GATEWAY FOR ALL CS VLANS)
+
+```
 enable
 configure terminal
 hostname CS-Router
-interface Serial0/3/0
- ip address 10.0.10.2 255.255.255.252
- no shutdown
- exit
+
+!  CRITICAL: DHCP Exclusions (Prevent IP conflicts)
+! Exclude gateway IPs and switch management IPs
+ip dhcp excluded-address 10.0.0.1 10.0.0.10      ! Gateway + reserved
+ip dhcp excluded-address 10.0.0.129 10.0.0.139   ! Faculty gateway + reserved
+ip dhcp excluded-address 10.0.0.193 10.0.0.203   ! TAs gateway + reserved
+ip dhcp excluded-address 10.0.254.1 10.0.254.20  ! All management IPs
+
+! Remove old single-subnet DHCP pool
+no ip dhcp pool CS-POOL
+
+! Clear old configuration on G0/0
+default interface GigabitEthernet0/0
 interface GigabitEthernet0/0
- ip address 10.0.0.1 255.255.255.0
+ no ip address
  no shutdown
  exit
-ip dhcp pool CS-POOL
- network 10.0.0.0 255.255.255.0
+
+!  ROUTER-ON-A-STICK Configuration
+! Single physical interface with multiple logical sub-interfaces
+interface GigabitEthernet0/0.10
+ description CS-LABS-VLAN
+ encapsulation dot1Q 10
+ ip address 10.0.0.1 255.255.255.128
+ exit
+
+interface GigabitEthernet0/0.11
+ description CS-FACULTY-VLAN
+ encapsulation dot1Q 11
+ ip address 10.0.0.129 255.255.255.192
+ exit
+
+interface GigabitEthernet0/0.12
+ description CS-TAS-VLAN
+ encapsulation dot1Q 12
+ ip address 10.0.0.193 255.255.255.192
+ exit
+
+interface GigabitEthernet0/0.99
+ description MGMT-VLAN
+ encapsulation dot1Q 99
+ ip address 10.0.254.1 255.255.255.192
+ exit
+
+!  NEW DHCP Pools (One per VLAN)
+ip dhcp pool CS-LABS
+ network 10.0.0.0 255.255.255.128
  default-router 10.0.0.1
  dns-server 8.8.8.8
  exit
+
+ip dhcp pool CS-FACULTY
+ network 10.0.0.128 255.255.255.192
+ default-router 10.0.0.129
+ dns-server 8.8.8.8
+ exit
+
+ip dhcp pool CS-TAS
+ network 10.0.0.192 255.255.255.192
+ default-router 10.0.0.193
+ dns-server 8.8.8.8
+ exit
+
+! WAN Connection to Main Router
+interface Serial0/3/0
+ description Link-to-Main-Campus
+ ip address 10.0.10.2 255.255.255.252
+ no shutdown
+ exit
+
+!  OSPF Routing Protocol
 router ospf 1
  router-id 2.2.2.2
+ ! Advertise WAN link
  network 10.0.10.0 0.0.0.3 area 0
- network 10.0.0.0 0.0.0.255 area 0
+ ! Advertise all CS VLANs
+ network 10.0.0.0 0.0.0.127 area 0
+ network 10.0.0.128 0.0.0.63 area 0
+ network 10.0.0.192 0.0.0.63 area 0
+ ! Advertise management network
+ network 10.0.254.0 0.0.0.63 area 0
  exit
+
+!  SSH Management
+ip domain-name cs.college.local
+crypto key generate rsa
+username admin privilege 15 secret Admin@123
+line vty 0 4
+ transport input ssh
+ login local
+ exit
+
 end
-write
-
+write memory
 ```
+## TESTS FOR CS ROUTER:
 
-### Eng-Router
+### Test 1:
+```show ip interface brief```
 
-```bash
-enable
-configure terminal
-hostname Eng-Router
-interface Serial0/3/1
- ip address 10.0.10.6 255.255.255.252
- no shutdown
- exit
-interface GigabitEthernet0/0
- ip address 10.0.1.1 255.255.255.128
- no shutdown
- exit
-ip dhcp pool ENG-POOL
- network 10.0.1.0 255.255.255.128
- default-router 10.0.1.1
- dns-server 8.8.8.8
- exit
-router ospf 1
- router-id 3.3.3.3
- network 10.0.10.4 0.0.0.3 area 0
- network 10.0.1.0 0.0.0.127 area 0
- exit
-end
-write
+✅ Expected: All sub-interfaces (G0/0.10, .11, .12, .99) show "up"
 
-```
+<img width="818" height="586" alt="image" src="https://github.com/user-attachments/assets/9f1e6b6b-f977-464d-a67a-5c3b59e69c3d" />
 
-### Admin-Router
 
-```bash
-enable
-configure terminal
-hostname Admin-Router
-default interface Serial0/1/0
-interface Serial0/2/0
- ip address 10.0.10.10 255.255.255.252
- no shutdown
- exit
-interface GigabitEthernet0/0
- ip address 10.0.1.129 255.255.255.128
- no shutdown
- exit
-ip dhcp pool ADMIN-POOL
- network 10.0.1.128 255.255.255.128
- default-router 10.0.1.129
- dns-server 8.8.8.8
- exit
-router ospf 1
- router-id 4.4.4.4
- network 10.0.10.8 0.0.0.3 area 0
- network 10.0.1.128 0.0.0.127 area 0
- exit
-end
-write
+### Test 2: 
+```show ip dhcp binding```
 
-```
+✅ Expected: Shows PCs that got IPs from DHCP pools
 
-### Library-Router
+### Test 3: 
+```show ip route```
+ 
+✅ Expected: Should see OSPF routes to other buildings
 
-```bash
-enable
-configure terminal
-hostname Library-Router
-interface Serial0/1/0
- ip address 10.0.10.14 255.255.255.252
- no shutdown
- exit
-interface GigabitEthernet0/0
- ip address 10.0.2.1 255.255.255.128
- no shutdown
- exit
-ip dhcp pool LIB-POOL
- network 10.0.2.0 255.255.255.128
- default-router 10.0.2.1
- dns-server 8.8.8.8
- exit
-router ospf 1
- router-id 5.5.5.5
- network 10.0.10.12 0.0.0.3 area 0
- network 10.0.2.0 0.0.0.127 area 0
- exit
-end
-write
+### Test 4: 
+```show ip ospf neighbor```
 
-```
+✅ Expected: Should see Main Router as neighbor (1.1.1.1)
+
+<img width="872" height="701" alt="image" src="https://github.com/user-attachments/assets/bce51b2f-0679-46cd-a7f3-803e6ad7976c" />
