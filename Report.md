@@ -3,95 +3,133 @@
 <img width="2543" height="1053" alt="image" src="https://github.com/user-attachments/assets/15fbce59-e68b-4727-b01b-afa08ecd8c09" />
 
 
-This project simulates a fully functional enterprise network connecting four major buildings (Computer Science, Engineering, Administration, Library) to the Internet. The design adopts a Hierarchical Network Model (Core, Distribution, Access) to ensure scalability, redundancy, and security.
+# University Campus Network Design Project
 
-Key Design Highlights:
+**Project Scope:** Full connectivity for 4 Buildings (CS, Engineering, Admin, Library) to the Internet.
+**Architecture:** Hierarchical Design with Enterprise-Grade Security.
 
-    WAN Connectivity: Real-world ISP simulation using BGP and NAT.
+---
 
-    Campus Backbone: High-speed OSPF routing between buildings.
+## 1️⃣ Rubric Requirements :
 
-    Building LANs: VLAN segmentation with strict Port Security.
+We have strictly adhered to the project rubric while implementing industry-standard enhancements.
 
-    Management: Centralized SSH management and automated IP addressing (DHCP).
+| **Criteria** | **Status** | **Implementation Details** |
+| --- | --- | --- |
+| **DHCP** | ✅ **Done** | Configured on Building Routers to automatically assign IPs, Gateways, and DNS (`8.8.8.8`) to all PCs. |
+| **Sub-netting** | ✅ **Done** | Efficient VLSM addressing used for all 4 buildings (`10.0.0.0/8` block) to separate Labs, Faculty, and Admin. |
+| **ACL** | ✅ **Done** | Implemented **Access Control Lists** on routers to BLOCK Students from accessing Faculty networks while allowing Internet access. |
+| **Routing** | ✅ **Done** | **OSPF Area 0** configured on all routers for full internal connectivity + **BGP** for ISP connection. |
+| **SSH** | ✅ **Done** | Telnet disabled. **SSH v2** configured with RSA encryption (1024-bit) on all devices for secure remote management. |
 
-(Place your Topology Image Here)
-2. Phase 1: The Core Network (Internet & Gateway)
+---
 
-The "Brain" of the network that handles traffic between the Campus and the Outside World.
-🌍 A. Internet Service Provider (ISP) Simulation
+## 2️⃣ Bonus & Advanced Features 
 
-Since Packet Tracer is an isolated environment, we architected a simulation of the real internet.
+Beyond the basic requirements, we implemented **5 Advanced Features** to simulate a real-world ISP and Enterprise environment:
 
-    The "Internet" Target: Created a Loopback interface (8.8.8.8) to simulate a public DNS server (Google).
+1. **Real-World ISP Simulation (BGP):**
+* Instead of a simple static route, we configured **BGP (Border Gateway Protocol)** between the Main Router and the ISP Router.
+* Simulates true internet routing between Autonomous Systems (AS 65000 & AS 65001).
 
-    BGP Routing: Configured Border Gateway Protocol (BGP) with AS 65001 to peer with the University. This simulates how real ISPs route traffic between autonomous systems.
 
-🏢 B. Main Campus Router (The Edge Gateway)
+2. **NAT Overload (Port Address Translation):**
+* The rubric asks for routing, but in reality, private IPs (`10.x.x.x`) cannot route on the internet.
+* We implemented **NAT Overload** on the Main Router to translate thousands of internal private IPs to a single Public IP (`200.1.1.1`).
 
-This router acts as the border between the private university network and the public internet.
 
-    Protocol Translation: Implements a hybrid routing strategy:
+3. **Layer 2 Security (Port Security):**
+* Implemented **Sticky MAC Learning** on Access Switches.
+* **Policy:** Faculty ports utilize `Shutdown` mode (Zero Tolerance) against rogue devices, while Student ports use `Restrict` mode.
 
-        BGP: Communicates externally with the ISP.
 
-        OSPF: Communicates internally with the 4 Building Routers.
+4. **Network Isolation (Management VLAN):**
+* Created a dedicated **VLAN 99** for network administrators, isolating management traffic (SSH) from user data traffic to ensure stability.
 
-    NAT Overload (PAT):
 
-        Problem: Internal IPs (10.x.x.x) are private and cannot route on the internet.
+5. **Performance Optimization (Rapid-PVST+):**
+* Upgraded Spanning Tree Protocol to **Rapid-PVST+** and enabled `PortFast`.
+* Ensures ports become active in sub-seconds (vs. 30s standard), preventing DHCP timeouts.
 
-        Solution: configured NAT Overload. All thousands of student/faculty requests are translated to a single Public IP (200.1.1.1) before leaving the network.
 
-3. Phase 2: Campus Connectivity (Routing Layer)
 
-To connect the disparate buildings, we utilized OSPF (Open Shortest Path First) Area 0.
+---
 
-    Dynamic Routing: All Building Routers (CS, Eng, Admin, Lib) automatically "advertise" their subnets to the Main Router.
+## 3️⃣ Network Topology Overview
 
-    Scalability: If a new lab is added to the "Library", OSPF automatically updates the routing table across the entire campus without manual intervention.
+The network connects **four main buildings** via a central backbone:
 
-    Subnetting Strategy (VLSM):
+1. **Computer Science (CS)**
+2. **Engineering (ENG)**
+3. **Administration (Admin)**
+4. **Library (Lib)**
 
-        CS Building: 10.0.0.0/24 (Subnetted for Labs, Faculty, TAs).
+All buildings connect to a **Main Campus Router**, which acts as the Gateway to the **ISP Router** (Internet).
 
-        Engineering: 10.0.1.0/24 (Subnetted for Labs, Admin, Faculty).
+---
 
-        Admin & Library: 10.0.2.0/24 range.
+## 4️⃣ Core Network Configuration (Backbone)
 
-4. Phase 3: Building Architecture (CS & Engineering)
+**Verified from Device Configuration:**
 
-Inside the buildings, we moved beyond simple connectivity to a Secure, Segmented, and Optimized design.
-🔹 A. VLAN Segmentation & ROAS
+### A. The Internet Service Provider (ISP)
 
-Instead of a flat network, we separated traffic based on user roles using VLANs and Router-on-a-Stick:
+* **Role:** Simulates the Global Internet.
+* **Target:** `Loopback0` interface configured as `8.8.8.8` (Public DNS) for connectivity testing.
+* **Routing:** Uses BGP to exchange routes with the University.
 
-    VLAN 10/20 (Labs): For Student PCs.
+### B. Main Campus Router (Edge Gateway)
 
-    VLAN 11/21 (Faculty): For Professors (Higher security).
+This is the most critical device, handling all ingress/egress traffic.
 
-    VLAN 99 (Management): Isolated traffic for Network Admins.
+* **NAT Configuration:**
+`ip nat inside source list 1 interface Serial0/0/0 overload`
+*(Maps all 4 buildings' traffic to the WAN IP).*
+* **Hybrid Routing:**
+* **OSPF:** Redistributes the default route to all 4 buildings so they know how to reach the internet.
+* **BGP:** Advertises the university's public network to the ISP.
 
-🔹 B. Switching Infrastructure
 
-    Distribution Layer (Cisco 3650): Aggregates traffic from all floors/rooms and handles VLAN tagging via 802.1Q Trunks.
 
-    Access Layer (Cisco 2960): Connects end-users. Configured with Rapid-PVST+ to ensure ports come online in sub-seconds (instant connectivity).
+---
 
-🔹 C. Security Hardening (The "Bonus" Features)
+## 5️⃣ Building Implementation (CS, Eng, Admin, Lib)
 
-We treated the internal network as a "Zero Trust" environment:
+Each building follows a standard **Hierarchical Model** (Access & Distribution Layers) with unique subnets.
 
-    Port Security:
+### A. VLAN Strategy (Segmentation)
 
-        Sticky MAC: Switches learn device MAC addresses automatically.
+We replaced flat networks with segmented VLANs for security:
 
-        Violation Modes: Faculty ports Shutdown if an unauthorized device connects. Student ports Restrict (block) intruders.
+* **VLAN 10/20/30/40:** Labs (Students/Public).
+* **VLAN 11/21/31/41:** Faculty/Staff (Secured).
+* **VLAN 99:** Management (Admins only).
 
-    ACLs (Access Control Lists):
+### B. Router-on-a-Stick (ROAS)
 
-        Configured on Building Routers to block Students from accessing the Faculty network, while still allowing them to access the Internet.
+Building routers (CS-Router, Eng-Router, etc.) use sub-interfaces (`G0/0.10`, `G0/0.20`) to route traffic between these VLANs efficiently using a single physical cable.
 
-    SSH Encryption:
+### C. Access Layer Security
 
-        Replaced insecure Telnet with SSH v2 for all device management.
+Access switches (Cisco 2960) are hardened:
+
+* **Unused Ports:** Shutdown.
+* **Active Ports:** Configured with `switchport port-security` to prevent "Man-in-the-Middle" attacks.
+
+---
+
+## 6️⃣ Verification Results (Proof of Work)
+
+| Test Scenario | Source | Destination | Result | Feature Validated |
+| --- | --- | --- | --- | --- |
+| **Internet Access** | **Library PC** | **8.8.8.8 (Google)** | ✅ **Success** | NAT & BGP |
+| **Campus Routing** | **Admin PC** | **CS Lab PC** | ✅ **Success** | OSPF Area 0 |
+| **Security Rule** | **CS Student** | **CS Faculty** | ✅ **Blocked** | ACL (Access List) |
+| **Rogue Device** | **Hacker Laptop** | **Switch Port** | ✅ **Port Down** | Port Security |
+| **Auto-Config** | **Any PC** | **-** | ✅ **IP Received** | DHCP Server |
+
+---
+
+### **Conclusion**
+
+This project delivers a **secure, scalable, and realistic** enterprise network. By fulfilling all rubric requirements and adding advanced features like **NAT, BGP, and Port Security**, the design simulates a true production environment ready for deployment.
