@@ -66,17 +66,215 @@ interfaces :
 
 
 # Admin Router :
-interfaces : 
-<img width="810" height="895" alt="image" src="https://github.com/user-attachments/assets/1c23fb52-ddd9-437a-9103-ef6538bcf5ab" />
+## interfaces & OSPF: 
+<img width="1003" height="890" alt="image" src="https://github.com/user-attachments/assets/24748828-f75f-49da-ad46-de5cc6a3ac7e" />
 
 
-DHCP :
+## DHCP :
 <img width="810" height="895" alt="image" src="https://github.com/user-attachments/assets/c1f9c39c-0bc1-40ab-bfd6-cd261f32a80d" />
 
-OSPF : 
-<img width="810" height="895" alt="image" src="https://github.com/user-attachments/assets/e26573e6-1add-4d4b-b51c-f66bec4af0bf" />
+
+# Lib conf : 
+<img width="1003" height="890" alt="image" src="https://github.com/user-attachments/assets/03673ce7-ce2a-43ca-ac0e-d1c4b2d607f7" />
 
 
 
+# All conf : 
+### ISP-Router
 
+```bash
+enable
+configure terminal
+hostname ISP-Router
+interface Serial0/0/0
+ ip address 200.1.1.2 255.255.255.252
+ clock rate 2000000
+ no shutdown
+ exit
+interface Loopback0
+ ip address 8.8.8.8 255.255.255.255
+ exit
+router bgp 65001
+ neighbor 200.1.1.1 remote-as 65000
+ network 8.8.8.8 mask 255.255.255.255
+ exit
+end
+write
 
+```
+
+### Main-Router
+
+```bash
+enable
+configure terminal
+hostname Main-Campus-Router
+default interface Serial0/1/0
+default interface Serial0/2/0
+default interface Serial0/3/0
+default interface Serial0/3/1
+interface Serial0/0/0
+ ip address 200.1.1.1 255.255.255.252
+ ip nat outside
+ no shutdown
+ exit
+interface Serial0/3/0
+ ip address 10.0.10.1 255.255.255.252
+ clock rate 2000000
+ ip nat inside
+ no shutdown
+ exit
+interface Serial0/3/1
+ ip address 10.0.10.5 255.255.255.252
+ clock rate 2000000
+ ip nat inside
+ no shutdown
+ exit
+interface Serial0/2/0
+ ip address 10.0.10.9 255.255.255.252
+ clock rate 2000000
+ ip nat inside
+ no shutdown
+ exit
+interface Serial0/1/0
+ ip address 10.0.10.13 255.255.255.252
+ clock rate 2000000
+ ip nat inside
+ no shutdown
+ exit
+router ospf 1
+ router-id 1.1.1.1
+ network 10.0.10.0 0.0.0.3 area 0
+ network 10.0.10.4 0.0.0.3 area 0
+ network 10.0.10.8 0.0.0.3 area 0
+ network 10.0.10.12 0.0.0.3 area 0
+ default-information originate
+ exit
+router bgp 65000
+ neighbor 200.1.1.2 remote-as 65001
+ network 10.0.0.0 mask 255.255.0.0
+ exit
+access-list 1 permit 10.0.0.0 0.0.255.255
+ip nat inside source list 1 interface Serial0/0/0 overload
+ip route 0.0.0.0 0.0.0.0 200.1.1.2
+end
+write
+
+```
+
+### CS-Router
+
+```bash
+enable
+configure terminal
+hostname CS-Router
+interface Serial0/3/0
+ ip address 10.0.10.2 255.255.255.252
+ no shutdown
+ exit
+interface GigabitEthernet0/0
+ ip address 10.0.0.1 255.255.255.0
+ no shutdown
+ exit
+ip dhcp pool CS-POOL
+ network 10.0.0.0 255.255.255.0
+ default-router 10.0.0.1
+ dns-server 8.8.8.8
+ exit
+router ospf 1
+ router-id 2.2.2.2
+ network 10.0.10.0 0.0.0.3 area 0
+ network 10.0.0.0 0.0.0.255 area 0
+ exit
+end
+write
+
+```
+
+### Eng-Router
+
+```bash
+enable
+configure terminal
+hostname Eng-Router
+interface Serial0/3/1
+ ip address 10.0.10.6 255.255.255.252
+ no shutdown
+ exit
+interface GigabitEthernet0/0
+ ip address 10.0.1.1 255.255.255.128
+ no shutdown
+ exit
+ip dhcp pool ENG-POOL
+ network 10.0.1.0 255.255.255.128
+ default-router 10.0.1.1
+ dns-server 8.8.8.8
+ exit
+router ospf 1
+ router-id 3.3.3.3
+ network 10.0.10.4 0.0.0.3 area 0
+ network 10.0.1.0 0.0.0.127 area 0
+ exit
+end
+write
+
+```
+
+### Admin-Router
+
+```bash
+enable
+configure terminal
+hostname Admin-Router
+default interface Serial0/1/0
+interface Serial0/2/0
+ ip address 10.0.10.10 255.255.255.252
+ no shutdown
+ exit
+interface GigabitEthernet0/0
+ ip address 10.0.1.129 255.255.255.128
+ no shutdown
+ exit
+ip dhcp pool ADMIN-POOL
+ network 10.0.1.128 255.255.255.128
+ default-router 10.0.1.129
+ dns-server 8.8.8.8
+ exit
+router ospf 1
+ router-id 4.4.4.4
+ network 10.0.10.8 0.0.0.3 area 0
+ network 10.0.1.128 0.0.0.127 area 0
+ exit
+end
+write
+
+```
+
+### Library-Router
+
+```bash
+enable
+configure terminal
+hostname Library-Router
+interface Serial0/1/0
+ ip address 10.0.10.14 255.255.255.252
+ no shutdown
+ exit
+interface GigabitEthernet0/0
+ ip address 10.0.2.1 255.255.255.128
+ no shutdown
+ exit
+ip dhcp pool LIB-POOL
+ network 10.0.2.0 255.255.255.128
+ default-router 10.0.2.1
+ dns-server 8.8.8.8
+ exit
+router ospf 1
+ router-id 5.5.5.5
+ network 10.0.10.12 0.0.0.3 area 0
+ network 10.0.2.0 0.0.0.127 area 0
+ exit
+end
+write
+
+```
