@@ -1,4 +1,87 @@
+### ISP-Router
+
+```bash
+enable
+configure terminal
+hostname ISP-Router
+interface Serial0/0/0
+ip address 200.1.1.2 255.255.255.252
+clock rate 2000000
+no shutdown
+exit
+interface Loopback0
+ip address 8.8.8.8 255.255.255.255
+exit
+router bgp 65001
+neighbor 200.1.1.1 remote-as 65000
+network 8.8.8.8 mask 255.255.255.255
+exit
+end
+write
+
+```
+
+### Main-Router
+
+```bash
+enable
+configure terminal
+hostname Main-Campus-Router
+default interface Serial0/1/0
+default interface Serial0/2/0
+default interface Serial0/3/0
+default interface Serial0/3/1
+interface Serial0/0/0
+ip address 200.1.1.1 255.255.255.252
+ip nat outside
+no shutdown
+exit
+interface Serial0/3/0
+ip address 10.0.10.1 255.255.255.252
+clock rate 2000000
+ip nat inside
+no shutdown
+exit
+interface Serial0/3/1
+ip address 10.0.10.5 255.255.255.252
+clock rate 2000000
+ip nat inside
+no shutdown
+exit
+interface Serial0/2/0
+ip address 10.0.10.9 255.255.255.252
+clock rate 2000000
+ip nat inside
+no shutdown
+exit
+interface Serial0/1/0
+ip address 10.0.10.13 255.255.255.252
+clock rate 2000000
+ip nat inside
+no shutdown
+exit
+router ospf 1
+router-id 1.1.1.1
+network 10.0.10.0 0.0.0.3 area 0
+network 10.0.10.4 0.0.0.3 area 0
+network 10.0.10.8 0.0.0.3 area 0
+network 10.0.10.12 0.0.0.3 area 0
+default-information originate
+exit
+router bgp 65000
+neighbor 200.1.1.2 remote-as 65001
+network 10.0.0.0 mask 255.255.0.0
+exit
+access-list 1 permit 10.0.0.0 0.0.255.255
+ip nat inside source list 1 interface Serial0/0/0 overload
+ip route 0.0.0.0 0.0.0.0 200.1.1.2
+end
+write
+
+```
+
 # BUILDING 1: COMPUTER SCIENCE (CS)
+
 ### STEP 1: CS Distribution Switch
 ```
 enable
@@ -723,3 +806,10 @@ Description: Implemented strict security policies at the access layer to prevent
 
     Impact: Reduces the time for a port to become active from 30 seconds to sub-seconds. This eliminates DHCP timeouts when PCs are turned on, ensuring immediate connectivity
 <img width="709" height="83" alt="image" src="https://github.com/user-attachments/assets/2b2baca9-d79c-43a9-b14c-b98feb690240" />
+
+Since this interface is configured as an access port exclusively for VLAN 10, PortFast is correctly enabled only for that VLAN to optimize connectivity. VLAN 99 is listed as disabled because this port is isolated from the Management network, confirming that traffic segmentation is working as intended
+
+
+# Admin : 
+### Admin Dist : 
+
