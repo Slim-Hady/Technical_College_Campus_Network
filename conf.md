@@ -366,3 +366,193 @@ write memory
 ✅ Expected: Should see Main Router as neighbor (1.1.1.1)
 
 <img width="872" height="701" alt="image" src="https://github.com/user-attachments/assets/bce51b2f-0679-46cd-a7f3-803e6ad7976c" />
+
+# BUILDING 2: ENGINEERING (ENG) 
+
+STEP 6: ENG Distribution Switch
+```
+enable
+configure terminal
+hostname ENG-Distribution-Switch
+
+vlan 20
+ name ENG-LABS
+vlan 21
+ name ENG-FACULTY
+vlan 22
+ name ENG-ADMIN
+vlan 99
+ name MGMT-ENG
+exit
+
+interface vlan 99
+ ip address 10.0.254.66 255.255.255.192
+ no shutdown
+ exit
+ip default-gateway 10.0.254.65
+
+interface GigabitEthernet1/0/1
+ description Trunk-to-ENG-Router
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 20,21,22,99
+ no shutdown
+ exit
+
+interface range GigabitEthernet1/0/2-4
+ description Trunk-to-Access-Switches
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 20,21,22,99
+ no shutdown
+ exit
+
+end
+write memory
+```
+### TEST: 
+```show vlan brief``` - Should see VLANs 20,21,22,99
+
+<img width="947" height="311" alt="image" src="https://github.com/user-attachments/assets/938cbc77-22d9-4fe4-bbe9-f0b923a89ef6" />
+
+### STEP 7: ENG Access Switch 1 (LABS - VLAN 20)
+
+```
+enable
+configure terminal
+hostname ENG-Access-Switch-1
+
+vlan 20
+ name ENG-LABS
+vlan 99
+ name MGMT-ENG
+exit
+
+interface GigabitEthernet0/1
+ switchport mode trunk
+ switchport trunk allowed vlan 20,99
+ no shutdown
+ exit
+
+interface range FastEthernet0/1-24
+ switchport mode access
+ switchport access vlan 20
+ switchport port-security
+ switchport port-security maximum 2
+ switchport port-security violation restrict
+ switchport port-security mac-address sticky
+ spanning-tree portfast
+ no shutdown
+ exit
+
+interface vlan 99
+ ip address 10.0.254.70 255.255.255.192
+ no shutdown
+ exit
+ip default-gateway 10.0.254.65
+
+ip domain-name eng.college.local
+crypto key generate rsa
+username admin privilege 15 secret Admin@123
+line vty 0 4
+ transport input ssh
+ login local
+ exit
+
+end
+write memory
+```
+### STEP 8: ENG Access Switch 2 (FACULTY - VLAN 21)
+
+```
+enable
+configure terminal
+hostname ENG-Access-Switch-2
+
+vlan 21
+ name ENG-FACULTY
+vlan 99
+ name MGMT-ENG
+exit
+
+interface GigabitEthernet0/1
+ switchport mode trunk
+ switchport trunk allowed vlan 21,99
+ no shutdown
+ exit
+
+interface range FastEthernet0/1-24
+ switchport mode access
+ switchport access vlan 21
+ switchport port-security
+ switchport port-security maximum 1
+ switchport port-security violation shutdown
+ switchport port-security mac-address sticky
+ spanning-tree portfast
+ no shutdown
+ exit
+
+interface vlan 99
+ ip address 10.0.254.71 255.255.255.192
+ no shutdown
+ exit
+ip default-gateway 10.0.254.65
+
+ip domain-name eng.college.local
+crypto key generate rsa
+username admin privilege 15 secret Admin@123
+line vty 0 4
+ transport input ssh
+ login local
+ exit
+
+end
+write memory
+```
+### STEP 9: ENG Access Switch 3 (ADMIN - VLAN 22)
+
+```
+enable
+configure terminal
+hostname ENG-Access-Switch-3
+
+vlan 22
+ name ENG-ADMIN
+vlan 99
+ name MGMT-ENG
+exit
+
+interface GigabitEthernet0/1
+ switchport mode trunk
+ switchport trunk allowed vlan 22,99
+ no shutdown
+ exit
+
+interface range FastEthernet0/1-24
+ switchport mode access
+ switchport access vlan 22
+ switchport port-security
+ switchport port-security maximum 1
+ switchport port-security violation restrict
+ switchport port-security mac-address sticky
+ spanning-tree portfast
+ no shutdown
+ exit
+
+interface vlan 99
+ ip address 10.0.254.72 255.255.255.192
+ no shutdown
+ exit
+ip default-gateway 10.0.254.65
+
+ip domain-name eng.college.local
+crypto key generate rsa
+username admin privilege 15 secret Admin@123
+line vty 0 4
+ transport input ssh
+ login local
+ exit
+
+end
+write memory
+```
